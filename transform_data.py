@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 ploted_interwal = 20
-#
+
 
 def plot_streamgraph():
     latver_probs, symk_probs, dwak_probs, letters = calculate_probabilities()
@@ -44,7 +44,7 @@ def plot_streamgraph():
 # Wczytanie danych z pliku do pythonowego array (pomijając indeks)
 def read_data_to_array(filename):
     array = []
-    with open(filename, "r") as file:  # Podmień "plik.txt" na ścieżkę do swojego pliku
+    with open(filename, "r") as file:
         for line in file:
             parts = line.strip().split("\t")  # Podział na kolumny według tabulatora
             letter = parts[1].strip('"')  # Usuń zbędne cudzysłowy
