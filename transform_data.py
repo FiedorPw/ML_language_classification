@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 ploted_interwal = 20
+#
 
 def plot_streamgraph():
     latver_probs, symk_probs, dwak_probs, letters = calculate_probabilities()
