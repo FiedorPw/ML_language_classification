@@ -2,6 +2,44 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 
+ploted_interwal = 20
+
+def plot_streamgraph():
+    latver_probs, symk_probs, dwak_probs, letters = calculate_probabilities()
+
+    latver_probs = latver_probs[:ploted_interwal]
+    symk_probs = symk_probs[:ploted_interwal]
+    dwak_probs = dwak_probs[:ploted_interwal]
+    letters = letters[:ploted_interwal]
+
+
+    # Create figure and axis
+    fig, ax = plt.subplots(figsize=(15, 6))
+
+    # Create x-axis points
+    x = np.arange(len(letters))
+
+    # Create y values for stacking
+    y = np.vstack([latver_probs, symk_probs, dwak_probs])
+
+    # Create streamgraph
+    # baseline='wiggle' creates the streamgraph effect
+    ax.stackplot(x, y, labels=['Latver', 'Symk', 'Dwak'], baseline='zero', alpha=0.7)
+
+    # Customize the plot
+    ax.set_title('Prawdopodobieństwo że litera jest z danego języka')
+    ax.set_xlabel('Litery')
+    ax.set_ylabel('Prawdopodobieństwo')
+
+    # Set x-axis ticks to show letters
+    ax.set_xticks(x)
+    ax.set_xticklabels(letters, rotation=45)
+
+    ax.legend(loc='upper right')
+
+    plt.tight_layout()
+    plt.show()
+
 # Wczytanie danych z pliku do pythonowego array (pomijając indeks)
 def read_data_to_array(filename):
     array = []
@@ -13,10 +51,10 @@ def read_data_to_array(filename):
     return array
 
 def read_arrays():
-    plik_latver = "dlatver 33.txt"
-    plik_symk = "dsymk 31.txt"
-    plik_dwak = "dwak 34.txt"
-    hidden_message = "message 33.txt"
+    plik_latver = "data/dlatver 33.txt"
+    plik_symk = "data/dsymk 31.txt"
+    plik_dwak = "data/dwak 34.txt"
+    hidden_message = "data/message 33.txt"
     latver = read_data_to_array(plik_latver)
     symk = read_data_to_array(plik_symk)
     dwak = read_data_to_array(plik_dwak)
@@ -48,6 +86,11 @@ def calculate_probabilities():
     symk_letter_prob = calculate_letter_probabilities(symk_counts)
     dwak_letter_prob = calculate_letter_probabilities(dwak_counts)
 
+    # dla wizualizacji zapisywanie procentów w czasie
+    latver_probs = []
+    symk_probs = []
+    dwak_probs = []
+
     # bez sprawdzenia czy litera jest w jakimś języku bo wszyskie majązakres A-F
     for letter in hidden_message:
        # update posterior(mnożmy przez prawdopodobieństwo warunkowe dla każdego przypadku w jakim możę być ten język)
@@ -56,8 +99,13 @@ def calculate_probabilities():
        posterior_dwak *= dwak_letter_prob[letter]
        posterior_sum = posterior_latver + posterior_symk + posterior_dwak
 
+       latver_probs.append(posterior_latver / posterior_sum)
+       symk_probs.append(posterior_symk / posterior_sum)
+       dwak_probs.append(posterior_dwak / posterior_sum)
+
        print(f"latver: {posterior_latver / posterior_sum:.2%}, "f"symk: {posterior_symk / posterior_sum:.2%}, "f"dwak: {posterior_dwak / posterior_sum:.2%} - {letter} ")
 
+    return latver_probs, symk_probs, dwak_probs, hidden_message
 
 
 if __name__ == '__main__':
@@ -69,7 +117,6 @@ if __name__ == '__main__':
     symk_counts   = pd.Series(symk_list).value_counts()
     dwak_counts   = pd.Series(dwak_list).value_counts()
     hidden_message_counts = pd.Series(hidden_message).value_counts()
-    #printing nicely all counts
-    # print_data_characteristics()
 
     calculate_probabilities()
+    plot_streamgraph()
