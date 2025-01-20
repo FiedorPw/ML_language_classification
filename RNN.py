@@ -88,13 +88,13 @@ def train(rnn, criterion, optimizer, category_tensor, sequence_tensor):
     return output, loss.item() # loss jako floatkk
 
 
-def training_loop(rnn, criterion, optimizer, n_iters=100_000):
+def training_loop(rnn, criterion, optimizer, n_iters, sequence_length):
     current_loss = 0
     all_losses = []
-    plot_steps, print_steps = 1000, 500
+    plot_steps, print_steps = 1000, 1000
 
     for i in range(n_iters):
-        category, sequence , category_tensor, sequence_tensor = random_training_sequence(sequence_length=15)
+        category, sequence , category_tensor, sequence_tensor = random_training_sequence(sequence_length=sequence_length)
 
         output, loss = train(rnn, criterion, optimizer, category_tensor, sequence_tensor)
         current_loss += loss
@@ -124,7 +124,7 @@ def main():
     learning_rate = 0.0005
     optimizer = torch.optim.Adam(rnn.parameters(), lr=learning_rate)
     # 4) Run training
-    training_loop(rnn, criterion, optimizer)
+    training_loop(rnn, criterion, optimizer, n_iters=30_000, sequence_length=22)
 
 if __name__ == '__main__':
     # latver, symk, dwak, hidden_message = read_arrays()
