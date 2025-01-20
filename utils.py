@@ -26,9 +26,9 @@ dwak_counts   = pd.Series(dwak_list).value_counts()
 hidden_message_counts = pd.Series(hidden_message).value_counts()
 
 all_categories = {
-    'symk': symk_list,
-    'latver': latver_list,
-    'dwak': dwak_list
+    'latveriański': latver_list,
+    'symkariański': symk_list,
+    'wakandyjski': dwak_list
 }
 
 # Turn a Unicode string to plain ASCII, thanks to https://stackoverflow.com/a/518232/2809427

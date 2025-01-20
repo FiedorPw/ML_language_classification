@@ -17,7 +17,9 @@ kategorie = {
 }
 
 torch.autograd.set_detect_anomaly(True)
-# accelerator = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+accelerator = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+print(accelerator)
+
 
 
 # all letters, n letters
@@ -43,7 +45,8 @@ class RNN(nn.Module):
         return output,hidden
 
     def init_hidden(self):
-        return torch.zeros(1,self.hidden_size)
+        return torch.zeros(1,self.hidden_size, device=accelerator)
+
 
 def one_pass_test(letter):
     input_tensor = letter_to_tensor(letter)
@@ -70,6 +73,9 @@ def category_from_output(output):
 
 def train(rnn, criterion, optimizer, category_tensor, sequence_tensor):
     hidden = rnn.init_hidden()
+    sequence_tensor = sequence_tensor.to(accelerator)
+    category_tensor = category_tensor.to(accelerator)
+
     output = None
     for i in range(sequence_tensor.size(0)):
         output, hidden = rnn(sequence_tensor[i], hidden)
@@ -77,7 +83,7 @@ def train(rnn, criterion, optimizer, category_tensor, sequence_tensor):
     loss = criterion(output, category_tensor) # loss function
     optimizer.zero_grad() # zerowanie gradientów
     loss.backward() # liczenie gradientów
-    optimizer.step() # aktualizacja wag
+    optimizer.step() # aktualizacja wa
 
     return output, loss.item() # loss jako floatkk
 
@@ -85,8 +91,7 @@ def train(rnn, criterion, optimizer, category_tensor, sequence_tensor):
 def training_loop(rnn, criterion, optimizer, n_iters=100_000):
     current_loss = 0
     all_losses = []
-    plot_steps, print_steps = 1000, 5000
-    n_iters = 100_000
+    plot_steps, print_steps = 1000, 500
 
     for i in range(n_iters):
         category, sequence , category_tensor, sequence_tensor = random_training_sequence(sequence_length=15)
@@ -100,7 +105,7 @@ def training_loop(rnn, criterion, optimizer, n_iters=100_000):
 
         if i % print_steps == 0:
             guess = category_from_output(output)
-            correct = f"✓l" if guess == category else f"✗ ({category})"
+            correct = f"✓" if guess == category else f"✗ ({category})"
             print(f"{i} {i/n_iters*100:.1f}% ({guess} {correct}) {loss:.4f}")
                         # procent treningu
 
@@ -112,10 +117,11 @@ def training_loop(rnn, criterion, optimizer, n_iters=100_000):
 def main():
     # 1) Create model
     rnn = RNN(N_LETTERS, N_HIDDEN, N_CATEGORIES)
+    rnn.to(accelerator)
     # 2) Define loss function
     criterion = nn.NLLLoss()
     # 3) Define optimizer
-    learning_rate = 0.001
+    learning_rate = 0.0005
     optimizer = torch.optim.Adam(rnn.parameters(), lr=learning_rate)
     # 4) Run training
     training_loop(rnn, criterion, optimizer)
@@ -124,7 +130,7 @@ if __name__ == '__main__':
     # latver, symk, dwak, hidden_message = read_arrays()
     # # inicjalizacja sieci
     # # one_pass_test('A')
-    # sequence_output = sequence_pass_test('ABCD')
+    # sequence_output = sequence_bpass_test('ABCD')
     # print(category_from_output(sequence_output))
     #
     main()
