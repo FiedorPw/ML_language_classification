@@ -149,10 +149,10 @@ def main():
     # 2) Define loss function
     criterion = nn.NLLLoss()
     # 3) Define optimizer
-    learning_rate = 0.0005
+    learning_rate = 0.0002
     optimizer = torch.optim.Adam(rnn.parameters(), lr=learning_rate)
     # 4) Run training
-    training_loop(rnn, criterion, optimizer, n_iters=10_000, sequence_length=22)
+    training_loop(rnn, criterion, optimizer, n_iters=30_000, sequence_length=22)
 
 if __name__ == '__main__':
     # latver, symk, dwak, hidden_message = read_arrays()

@@ -4,14 +4,8 @@ import pandas as pd
 import torch
 import random
 from transform_data import read_arrays
-
+accelerator = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 N_LETTERS = 6
-
-
-
-
-
-
 
 ALL_LETTERS = "ABCDEF"
 # random_seqence_length = random.randint(3, 7)
@@ -61,7 +55,8 @@ def line_to_tensor(string_letters):
 def random_training_sequence(all_categories = all_categories,
     sequence_length = 5,
     dataset = "train",
-    train_test_split = 0.8):
+    train_test_split = 0.8,
+    device=accelerator):
 
 
     def random_element_sequence(category, sequence_length):
@@ -83,10 +78,10 @@ def random_training_sequence(all_categories = all_categories,
 
     category = random.choice(list(all_categories.keys()))
     index_category = list(all_categories.keys()).index(category)
-    category_tensor = torch.tensor([index_category], dtype=torch.long)
+    category_tensor = torch.tensor([index_category], dtype=torch.long, device=device)
 
     sequence = random_element_sequence(category, sequence_length)
-    sequence_tensor = line_to_tensor(sequence)
+    sequence_tensor = line_to_tensor(sequence).to(device) # na gpu
 
     #       nazwa    sekwencja_liter(arr) indeks_kategorii  sekwencja_liter(tensor
     return category, sequence, category_tensor, sequence_tensor
