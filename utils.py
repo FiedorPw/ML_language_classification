@@ -58,7 +58,10 @@ def line_to_tensor(string_letters):
     return tensor
 
 
-def random_training_sequence(all_categories, sequence_length, dataset,train_test_split = 0.8):
+def random_training_sequence(all_categories = all_categories,
+    sequence_length = 5,
+    dataset = "train",
+    train_test_split = 0.8):
 
 
     def random_element_sequence(category, sequence_length):

@@ -1,25 +1,24 @@
 import torch
 import torch.nn as nn
+from utils import letter_to_index, letter_to_tensor, line_to_tensor, random_training_sequence
 import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
-import builtins
-
-
-from utils import letter_to_index, letter_to_tensor, line_to_tensor
 
 
 from transform_data import read_arrays
 
 N_LETTERS = 6
-n_categories = 3
-n_hidden = 128
+N_CATEGORIES = 3
+N_HIDDEN = 128
 
 kategorie = {
     0: "latveriański",
     1: "symkariański",
     2: "wakandyjski"
 }
+
+torch.autograd.set_detect_anomaly(True)
+# accelerator = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 
 # all letters, n letters
 # load data letter to tensor
@@ -69,38 +68,63 @@ def category_from_output(output):
     print("indeks klasy", category_idx)
     return kategorie[category_idx]
 
-criterion = nn.NLLLoss()
-learning_rate = 0.001
-optimizer = torch.optim.Adam(rnn.parameters(), lr=learning_rate)
-
-def train(line_tensor, category_tensor):
+def train(rnn, criterion, optimizer, category_tensor, sequence_tensor):
     hidden = rnn.init_hidden()
-    for i range in range(line_tensor()[0]):
-        output, hidden = rnn(line_tensor[i], hidden)
+    output = None
+    for i in range(sequence_tensor.size(0)):
+        output, hidden = rnn(sequence_tensor[i], hidden)
         # uczenie
-        loss = criterion(output, category_tensor) # loss function
-        optimizer.zero_grad() # zerowanie gradientów
-        loss.backward() # liczenie gradientów
-        optimizer.step() # aktualizacja wag
+    loss = criterion(output, category_tensor) # loss function
+    optimizer.zero_grad() # zerowanie gradientów
+    loss.backward() # liczenie gradientów
+    optimizer.step() # aktualizacja wag
 
-    return output, loss.item()
-
-current_loss = 0
-all_losses = []
-plot_steps, print_steps = 1000, 5000
-n_iters = 100000
-for i in range(n_iters):
-    category, line, category_tensor, line_tensor = random_training_example()
+    return output, loss.item() # loss jako floatkk
 
 
+def training_loop(rnn, criterion, optimizer, n_iters=100_000):
+    current_loss = 0
+    all_losses = []
+    plot_steps, print_steps = 1000, 5000
+    n_iters = 100_000
+
+    for i in range(n_iters):
+        category, sequence , category_tensor, sequence_tensor = random_training_sequence(sequence_length=15)
+
+        output, loss = train(rnn, criterion, optimizer, category_tensor, sequence_tensor)
+        current_loss += loss
+
+        if i % plot_steps == 0:
+            all_losses.append(current_loss / plot_steps) # średnia z ostatnich plot_steps kroków
+            current_loss = 0
+
+        if i % print_steps == 0:
+            guess = category_from_output(output)
+            correct = f"✓l" if guess == category else f"✗ ({category})"
+            print(f"{i} {i/n_iters*100:.1f}% ({guess} {correct}) {loss:.4f}")
+                        # procent treningu
+
+    plt.figure()
+    plt.plot(all_losses)
+    plt.show()
 
 
-
+def main():
+    # 1) Create model
+    rnn = RNN(N_LETTERS, N_HIDDEN, N_CATEGORIES)
+    # 2) Define loss function
+    criterion = nn.NLLLoss()
+    # 3) Define optimizer
+    learning_rate = 0.001
+    optimizer = torch.optim.Adam(rnn.parameters(), lr=learning_rate)
+    # 4) Run training
+    training_loop(rnn, criterion, optimizer)
 
 if __name__ == '__main__':
-    latver, symk, dwak, hidden_message = read_arrays()
-    # inicjalizacja sieci
-    rnn = RNN(N_LETTERS, n_hidden, n_categories)
-    # one_pass_test('A')
-    sequence_output = sequence_pass_test('ABCD')
-    print(category_from_output(sequence_output))
+    # latver, symk, dwak, hidden_message = read_arrays()
+    # # inicjalizacja sieci
+    # # one_pass_test('A')
+    # sequence_output = sequence_pass_test('ABCD')
+    # print(category_from_output(sequence_output))
+    #
+    main()
