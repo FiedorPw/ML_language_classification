@@ -56,8 +56,7 @@ def one_pass_test(letter):
     print("rozmiar wektora ukrytego", next_hidden.size())
     return output
 
-def sequence_pass_test(letters):
-    input_tensor = line_to_tensor(letters)
+def sequence_pass_test(rnn, input_tensor):
     print("rozmiar inputu - batch size, 1, ilość liter", input_tensor.size())
     hidden_tensor = rnn.init_hidden()
     for i, letter in enumerate(letters):
@@ -68,7 +67,7 @@ def sequence_pass_test(letters):
 def category_from_output(output):
     # print("output procentowy", output)
     category_idx = torch.argmax(output).item()
-    print("indeks klasy", category_idx)
+    # print("indeks klasy", category_idx)
     return kategorie[category_idx]
 
 def train(rnn, criterion, optimizer, category_tensor, sequence_tensor):
@@ -91,7 +90,8 @@ def train(rnn, criterion, optimizer, category_tensor, sequence_tensor):
 def training_loop(rnn, criterion, optimizer, n_iters, sequence_length):
     current_loss = 0
     all_losses = []
-    plot_steps, print_steps = 1000, 1000
+    all_tests = []
+    plot_steps, test_steps = 500, 500
 
     for i in range(n_iters):
         category, sequence , category_tensor, sequence_tensor = random_training_sequence(sequence_length=sequence_length)
@@ -103,16 +103,44 @@ def training_loop(rnn, criterion, optimizer, n_iters, sequence_length):
             all_losses.append(current_loss / plot_steps) # średnia z ostatnich plot_steps kroków
             current_loss = 0
 
-        if i % print_steps == 0:
+        if i % test_steps == 0:
+
             guess = category_from_output(output)
             correct = f"✓" if guess == category else f"✗ ({category})"
-            print(f"{i} {i/n_iters*100:.1f}% ({guess} {correct}) {loss:.4f}")
+            test_score = test_accuracy(rnn, sequence_length)
+            all_tests.append(test_score)
+            print(f"{i} {i/n_iters*100:.1f}% ({guess} {correct}) {loss:.4f}\n")
                         # procent treningu
 
     plt.figure()
     plt.plot(all_losses)
+    plt.plot(all_tests)
+    plt.legend()
     plt.show()
 
+def predict(rnn, sequence_tensor, sequence_length):
+
+    with torch.no_grad():
+        hidden = rnn.init_hidden()
+        output = torch.zeros(1, N_CATEGORIES)
+        for i in range(sequence_tensor.size(0)):
+            output, hidden = rnn(sequence_tensor[i], hidden)
+
+        guess = category_from_output(output)
+        # print(guess)
+        return guess
+
+def test_accuracy(rnn, sequence_length):
+    correct = 0
+    n_test = 100
+    for i in range(n_test):
+        category, sequence, category_tensor, sequence_tensor = random_training_sequence(sequence_length=sequence_length, dataset="test")
+        output = predict(rnn, sequence_tensor, sequence_length)
+        if output == category:
+            correct += 1
+    accuracy = correct/n_test
+    print(f"Accuracy: {accuracy * 100}%")
+    return accuracy
 
 def main():
     # 1) Create model
@@ -124,7 +152,7 @@ def main():
     learning_rate = 0.0005
     optimizer = torch.optim.Adam(rnn.parameters(), lr=learning_rate)
     # 4) Run training
-    training_loop(rnn, criterion, optimizer, n_iters=30_000, sequence_length=22)
+    training_loop(rnn, criterion, optimizer, n_iters=10_000, sequence_length=22)
 
 if __name__ == '__main__':
     # latver, symk, dwak, hidden_message = read_arrays()
