@@ -3,8 +3,12 @@ import torch.nn as nn
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import builtins
+
 
 from utils import letter_to_index, letter_to_tensor, line_to_tensor
+
+
 from transform_data import read_arrays
 
 N_LETTERS = 6

@@ -1,16 +1,20 @@
 # data: https://download.pytorch.org/tutorial/data.zip
-import io
-import os
 import unicodedata
-import string
-import glob
-
+import pandas as pd
 import torch
 import random
-from transform_data import load_data
+from transform_data import read_arrays
 
 N_LETTERS = 6
+
+
+
+
+
+
+
 ALL_LETTERS = "ABCDEF"
+# random_seqence_length = random.randint(3, 7)
 
 latver, symk, dwak, hidden_message = read_arrays()
 #usunięcie 'x' z początku każdej listy
@@ -21,7 +25,7 @@ symk_counts   = pd.Series(symk_list).value_counts()
 dwak_counts   = pd.Series(dwak_list).value_counts()
 hidden_message_counts = pd.Series(hidden_message).value_counts()
 
-category_lines = {
+all_categories = {
     'symk': symk_list,
     'latver': latver_list,
     'dwak': dwak_list
@@ -47,38 +51,52 @@ def letter_to_tensor(letter):
 
 # Turn a line into a <line_length x 1 x n_letters>,
 # or an array of one-hot letter vectors
-def line_to_tensor(line):
-    tensor = torch.zeros(len(line), 1, N_LETTERS)
-    for i, letter in enumerate(line):
+def line_to_tensor(string_letters):
+    tensor = torch.zeros(len(string_letters), 1, N_LETTERS)
+    for i, letter in enumerate(string_letters):
         tensor[i][0][letter_to_index(letter)] = 1
     return tensor
 
 
-def random_training_example(category_lines, all_categories):
+def random_training_sequence(all_categories, sequence_length, dataset,train_test_split = 0.8):
 
-    def random_choice(a):
-        random_idx = random.randint(0, len(a) - 1)
-        return a[random_idx]
 
-    category = random_choice(category_lines.keys())
-    line = random_choice(category_lines[category])
-    TUTAJ FIX TO NA GÓRZE ZMNIENIONE A NA DOLE JESZCZE NIE (TRZEBA DOSTOSOWAĆ DO NOWEGO ŁADOWANIA DANYCH Z CATEGORY_LINES)
-    category_tensor = torch.tensor([list(category_lines.keys()).index(category)], dtype=torch.long)
+    def random_element_sequence(category, sequence_length):
+        category_list_length = len(all_categories[category])
+        split_id = int(category_list_length * train_test_split)
 
-    line_tensor = line_to_tensor(line)
-    return category, line, category_tensor, line_tensor
+        if dataset == "train":
+            #przykład z od zera do x% danych treningowych
+
+            random_idx = random.randint(0, split_id)
+        elif dataset == "test":
+            #przykład z x% danych testowych do końca
+            random_idx = random.randint(split_id,category_list_length)
+        else:
+            print("test/train split error")
+
+        return all_categories[category][random_idx:random_idx + sequence_length]  # element z kategori na pozycji id
+
+
+    category = random.choice(list(all_categories.keys()))
+    index_category = list(all_categories.keys()).index(category)
+    category_tensor = torch.tensor([index_category], dtype=torch.long)
+
+    sequence = random_element_sequence(category, sequence_length)
+    sequence_tensor = line_to_tensor(sequence)
+
+    #       nazwa    sekwencja_liter(arr) indeks_kategorii  sekwencja_liter(tensor
+    return category, sequence, category_tensor, sequence_tensor
 
 
 
 if __name__ == '__main__':
-    ALL_LETTERS = string.ascii_letters + " .,;'"
-    print("N_LETTERS is of type:", type(ALL_LETTERS))
+    category, sequence, category_tensor, sequence_tensor = random_training_sequence(all_categories, 5, dataset = "test")
+    print(category)
+    print(sequence)
+    print(category_tensor)
+    print(sequence_tensor)
 
-    # print(ALL_LETTERS)
-    # print(unicode_to_ascii('Ślusàrski'))
-
-    # category_lines, all_categories = load_data()
-    # print(category_lines['Italian'][:5])
 
     # print(letter_to_tensor('J')) # [1, 57]
     # print(line_to_tensor('Jones').size()) # [5, 1, 57]
